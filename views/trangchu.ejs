@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>trang chu</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.0/socket.io.js"
+        integrity="sha512-nYuHvSAhY5lFZ4ixSViOwsEKFvlxHMU2NHts1ILuJgOS6ptUmAGt/0i5czIgMOahKZ6JN84YFDA+mCdky7dD8A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.js"
+        integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+    <script>
+        const socket = io('http://localhost:3000');
+
+        function openStream() {
+            const config = { audio: false, video: true };
+            return navigator.mediaDevices.getUserMedia(config);
+        }
+
+        function playStream(igVideoTag, stream) {
+            const video = document.getElementById(igVideoTag);
+            video.srcObject = stream;
+            video.play();
+        }
+        // openStream()
+        //     .then(stream => playStream('localStream', stream))
+
+        // caller
+        var peer = new Peer();
+        peer.on('open', function (id) {
+            $('#peer-id').append(id);
+
+        });
+        //caller
+        $('.btn-submit-id').click(() => {
+
+            const id = $('#input-peer-id').val();
+            openStream()
+                .then(stream => {
+                    playStream('localStream', stream);
+                    const call = peer.call(id, stream);
+                    call.on('stream', (removeStream) => {
+                        playStream('remoteStream', removeStream);
+                    })
+                });
+
+        });
+        // người nhận
+        peer.on('call', call => {
+            openStream()
+                .then(stream => {
+                    call.answer(stream);
+                    playStream('localStream', stream);
+                    call.on('stream', (removeStream) => {
+                        playStream('remoteStream', removeStream);
+                    })
+
+                })
+        })
+
+        $('.btn-submit-signup').click(() => {
+
+            const user = $('#input-user').val();
+            socket.emit("NGUOI_DANG_KY", user)
+
+        });
+
+
+    </script>
+</head>
+
+<body>
+    <h3 id="peer-id">your ID: </h3>
+    <input type="text" id="input-peer-id" placeholder="Nhập ID" value="" />
+    <button type="button" class="btn-submit-id">Gọi</button>
+    <h3>đăng ký</h3>
+    <input type="text" id="input-user" placeholder="Nhập ID" value="" />
+    <button type="button" class="btn-submit-signup">Đăng Ký</button>
+    <h1>bạn</h1>
+    <video id="localStream" width="300" controls></video>
+    <br />
+    <h1>người khác</h1>
+    <video id="remoteStream" width="300" controls></video>
+</body>
+
+</html>
