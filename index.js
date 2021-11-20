@@ -36,7 +36,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 
 var server = require("http").Server(app);
-const io = require('socket.io')(server, {
+const io = require('socket.io')(process.env.PORT || 3000, {
     cors: {
         origin: '*',
     }
